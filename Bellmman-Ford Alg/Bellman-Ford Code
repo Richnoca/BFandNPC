@@ -1,0 +1,138 @@
+from math import inf
+
+def bellman_ford(nodes, edges, source):
+    distances = {node: inf for node in nodes}  # Start distances at infinity except for source
+    previous = {node: None for node in nodes}
+    distances[source] = 0
+
+    for _ in range(len(nodes) - 1):  # Relax  edges V - 1 times
+        changed = False
+
+        for u, v, weight in edges:
+            if distances[u] != inf and distances[u] + weight < distances[v]:
+                distances[v] = distances[u] + weight
+                previous[v] = u
+                changed = True
+
+        if not changed:  # If no distance changed stop early
+            break
+
+    negative_cycle = False  # Check for a reachable negative cycle
+
+    for u, v, weight in edges:
+        if distances[u] != inf and distances[u] + weight < distances[v]:
+            negative_cycle = True
+            break
+
+    return distances, previous, negative_cycle
+
+def build_path(previous, source, target):
+    path = []
+    current = target
+
+    while current is not None:
+        path.append(current)
+
+        if current == source:
+            return list(reversed(path))
+
+        current = previous[current]
+
+    return None
+
+def print_result(title, nodes, distances, previous, negative_cycle, source):
+    print("\n" + title)
+    print("-" * len(title))
+
+    if negative_cycle:
+        print("Negative cycle detected.")
+        print("Shortest paths are not reliable because distances can keep decreasing.")
+        return
+
+    for node in nodes:
+        distance = distances[node]
+
+        if distance == inf:
+            print(f"{node}: unreachable")
+        else:
+            path = build_path(previous, source, node)
+            path_text = " -> ".join(path)
+            print(f"{node}: distance = {distance}, path = {path_text}")
+
+
+
+# Test Cases
+
+# Case 1: Positive weights only
+nodes1 = ["A", "B", "C", "D", "E"] 
+
+edges1 = [
+    ("A", "B", 4), 
+    ("A", "C", 2),
+    ("B", "C", 5),
+    ("B", "D", 10),
+    ("C", "E", 3),
+    ("E", "D", 4),
+    ("D", "B", 1),
+]
+
+source1 = "A"
+
+distances, previous, negative_cycle = bellman_ford(nodes1, edges1, source1)
+print_result(
+    "Test 1: Positive Weights",
+    nodes1,
+    distances,
+    previous,
+    negative_cycle,
+    source1
+)
+
+# Case 2: Negative weights, but no negative cycle
+nodes2 = ["A", "B", "C", "D", "E"]
+
+edges2 = [
+    ("A", "B", 6),
+    ("A", "C", 7),
+    ("B", "D", 5),
+    ("B", "E", -4),
+    ("C", "B", 8),
+    ("C", "D", -3),
+    ("D", "B", -2),
+    ("E", "D", 7),
+]
+
+source2 = "A"
+
+distances, previous, negative_cycle = bellman_ford(nodes2, edges2, source2)
+print_result(
+    "Test 2: Negative Weights, No Negative Cycle",
+    nodes2,
+    distances,
+    previous,
+    negative_cycle,
+    source2
+)
+
+# Case 3: Negative cycle
+nodes3 = ["S", "A", "B", "C", "D"]
+
+edges3 = [
+    ("S", "A", 1),
+    ("A", "B", 2),
+    ("B", "C", -4),
+    ("C", "A", 1),
+    ("C", "D", 2),
+]
+
+source3 = "S"
+
+distances, previous, negative_cycle = bellman_ford(nodes3, edges3, source3)
+print_result(
+    "Test 3: Negative Cycle",
+    nodes3,
+    distances,
+    previous,
+    negative_cycle,
+    source3
+)
